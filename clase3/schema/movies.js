@@ -2,32 +2,33 @@ const z = require('zod');
 
 const movieSchema = z.object({
   title: z.string({
-    required_error: 'Title is required',
-    invalid_type_error: 'Title must be a string',
+    invalid_type_error: 'title must be a string',
+    required_error: 'title is required',
   }),
-  year: z.number().int().min(1600).max(2024),
+  year: z.number().int().min(1900).max(2023),
   director: z.string(),
   duration: z.number().int().positive(),
+  rate: z.number().min(0).max(10).optional(),
   poster: z.string().url({
-    message: 'Poster must be a valid URL',
+    message: 'poster must be a valid url',
   }),
-  rate: z.number().min(0).max(10).default(5),
   genre: z.array(
     z.enum([
+      'Drama',
       'Action',
       'Adventure',
-      'Drama',
-      'Comedy',
-      'Horror',
-      'Romance',
-      'Thriller',
-      'Crime',
-      'Mystery',
       'Sci-Fi',
       'Fantasy',
+      'Comedy',
+      'Romance',
+      'Fantasy',
+      'Horror',
+      'Thriller',
+      'Crime',
     ]),
     {
-      message: 'Genre must be an array',
+      required_error: 'genre is required',
+      invalid_type_error: 'genre must be a string',
     }
   ),
 });
@@ -36,8 +37,8 @@ function validateMovie(movie) {
   return movieSchema.safeParse(movie);
 }
 
-function validatePartialMovie(object) {
-  return movieSchema.partial().safeParse(object); // convierte todas las propiedades en opcionales
+function validatePartialMovie(movie) {
+  return movieSchema.partial().safeParse(movie);
 }
 
 module.exports = {
