@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Import Socket.IO cdn -->
+    <script type="module">
+      import { io } from 'https://cdn.socket.io/4.4.1/socket.io.esm.min.js';
+
+      // recuperamos el username o lo creamos con una api (por ahora)
+      const getUsername = async () => {
+        const username = localStorage.getItem('username');
+        if (username) {
+          console.log(username);
+          return username;
+        }
+        const res = await fetch(
+          'https://random-data-api.com/api/users/random_user'
+        );
+        const { username: randomUsername } = await res.json();
+        localStorage.setItem('username', randomUsername);
+        return randomUsername;
+      };
+
+      // instanciamos el socket
+      const socket = io({
+        auth: {
+          username: await getUsername(),
+          serverOffset: 0, // offset de los mensajes enviados
+        },
+      });
+
+      // traemos el formulario
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
+
+      // escuchamos el mensaje
+      socket.on('chat message', (msg, serverOffset, username) => {
+        // creamos el item li
+        const item = `<li><p>${msg}</p> <span>${username}</span></li>`;
+        // insertamos el html
+        messages.insertAdjacentHTML('beforeend', item);
+        // actualizamos el offset para saber donde se quedo el usuario y poder actualizar el chat
+        socket.auth.serverOffset = serverOffset;
+        // scroll down
+        messages.scrollTop = messages.scrollHeight;
+      });
+      // enviamos el mensaje
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        if (input.value) {
+          //si tenemos algun valor en el formulario
+          socket.emit('chat message', input.value);
+          input.value = '';
+        }
+      });
+    </script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Chat</title>
+  </head>
+  <body>
+    <section id="chat">
+      <ul id="messages"></ul>
+      <form id="form">
+        <input
+          type="text"
+          name="message"
+          id="input"
+          placeholder="Type a message"
+          autocomplete="off"
+        />
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+  </body>
+</html>
